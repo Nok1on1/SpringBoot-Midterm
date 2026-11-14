@@ -42,7 +42,7 @@ public class Book {
 
   @ManyToMany(cascade = CascadeType.PERSIST)
   @JoinTable(name = "books_authors",
-      joinColumns = @JoinColumn(name = "book_id"))
+      joinColumns = @JoinColumn(name = "book_id"), inverseJoinColumns = @JoinColumn(name = "author_id"))
   @BatchSize(size = 30)
   private List<Author> authors = new ArrayList<>();
 

@@ -1,6 +1,7 @@
 package org.example.midtermproject.service;
 
 import jakarta.persistence.criteria.Predicate;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import org.example.midtermproject.dto.request.BookRequest;
@@ -48,7 +49,7 @@ public class BookService {
   }
 
   @Transactional
-  public String UploadBookCoverImage(long bookId, MultipartFile file) {
+  public String uploadBookCoverImage(long bookId, MultipartFile file) {
     var coverImagePath = uploadImageService.store(file);
     var success = bookRepository.updateCoverImagePathById(coverImagePath, bookId);
     if (success != 1) {
@@ -88,5 +89,14 @@ public class BookService {
     };
 
     return bookRepository.findAll(spec);
+  }
+
+  public byte[] getBookCoverImage(Long bookId) {
+    String path = bookRepository.findCoverImagePath(bookId);
+    try {
+      return uploadImageService.load(path).getContentAsByteArray();
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to load cover image", e);
+    }
   }
 }

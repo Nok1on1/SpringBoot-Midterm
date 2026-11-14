@@ -2,8 +2,6 @@ package org.example.midtermproject.repository;
 
 import java.util.List;
 import org.example.midtermproject.entity.Book;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.SearchResult;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -24,4 +22,7 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
   int updateCoverImagePathById(String coverImagePath, long id);
 
   List<Book> findBooksByName(String name);
+
+  @Query("select b.coverImagePath from Book b where b.id = ?1")
+  String findCoverImagePath(Long bookId);
 }
