@@ -1,27 +1,101 @@
 package org.example.midtermproject.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import org.example.midtermproject.dto.request.AuthorRequest;
-import org.example.midtermproject.dto.request.BookRequest;
+import org.example.midtermproject.dto.response.AuthorResponse;
+import org.example.midtermproject.dto.response.PageResponse;
+import org.example.midtermproject.dto.response.SearchBookResponse;
+import org.example.midtermproject.entity.Author;
+import org.example.midtermproject.entity.Book;
 import org.example.midtermproject.service.AuthorService;
+import org.example.midtermproject.service.BookService;
+import org.example.midtermproject.util.PageableUtils;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-
 @RequestMapping("/api/authors")
+@Validated
 public class AuthorController {
 
-  AuthorService authorService;
+  private static final PageableUtils AUTHOR_PAGEABLE = new PageableUtils(Author.class);
+  private static final PageableUtils BOOK_PAGEABLE = new PageableUtils(Book.class);
 
-  public AuthorController(AuthorService authorService) {
+  private final AuthorService authorService;
+  private final BookService bookService;
+
+  public AuthorController(AuthorService authorService, BookService bookService) {
     this.authorService = authorService;
+    this.bookService = bookService;
   }
 
-  @PostMapping(path = "/uploadAuthor")
-  public void insertAuthor(@Valid @RequestBody AuthorRequest authorReq) {
-    authorService.addAuthor(authorReq);
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public AuthorResponse createAuthor(@Valid @RequestBody AuthorRequest authorRequest) {
+    return authorService.createAuthor(authorRequest);
+  }
+
+  @GetMapping
+  public PageResponse<AuthorResponse> getAuthors(
+      @RequestParam(defaultValue = "0") @Min(0) int page,
+      @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
+      @RequestParam(defaultValue = "lastName") String sortBy,
+      @RequestParam(defaultValue = "asc") String sortDir) {
+    Pageable pageable = AUTHOR_PAGEABLE.of(page, size, sortBy, sortDir);
+    return PageResponse.from(authorService.getAuthors(pageable));
+  }
+
+  @GetMapping("/search")
+  public PageResponse<AuthorResponse> searchAuthorsByLastName(
+      @RequestParam @NotBlank String lastName,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
+      @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
+      @RequestParam(defaultValue = "lastName") String sortBy,
+      @RequestParam(defaultValue = "asc") String sortDir) {
+    Pageable pageable = AUTHOR_PAGEABLE.of(page, size, sortBy, sortDir);
+    return PageResponse.from(authorService.getAuthorsByLastName(lastName, pageable));
+  }
+
+  @GetMapping("/{authorId}")
+  public AuthorResponse getAuthor(@PathVariable @Positive Long authorId) {
+    return authorService.getAuthor(authorId);
+  }
+
+  @PutMapping("/{authorId}")
+  public AuthorResponse updateAuthor(@PathVariable @Positive Long authorId,
+      @Valid @RequestBody AuthorRequest authorRequest) {
+    return authorService.updateAuthor(authorId, authorRequest);
+  }
+
+  @DeleteMapping("/{authorId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void deleteAuthor(@PathVariable @Positive Long authorId) {
+    authorService.deleteAuthor(authorId);
+  }
+
+  @GetMapping("/{authorId}/books")
+  public PageResponse<SearchBookResponse> getBooksByAuthor(
+      @PathVariable @Positive Long authorId,
+      @RequestParam(defaultValue = "0") @Min(0) int page,
+      @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
+      @RequestParam(defaultValue = "name") String sortBy,
+      @RequestParam(defaultValue = "asc") String sortDir) {
+    Pageable pageable = BOOK_PAGEABLE.of(page, size, sortBy, sortDir);
+    return PageResponse.from(bookService.getBooksByAuthor(authorId, pageable));
   }
 }

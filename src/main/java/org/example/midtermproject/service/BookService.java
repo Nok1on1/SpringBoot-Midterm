@@ -1,14 +1,17 @@
 package org.example.midtermproject.service;
 
 import jakarta.persistence.criteria.Predicate;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.example.midtermproject.dto.request.BookRequest;
 import org.example.midtermproject.dto.request.SearchBookRequest;
+import org.example.midtermproject.dto.response.BookResponse;
+import org.example.midtermproject.dto.response.SearchBookResponse;
 import org.example.midtermproject.entity.Author;
 import org.example.midtermproject.entity.Book;
 import org.example.midtermproject.repository.BookRepository;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -31,39 +34,67 @@ public class BookService {
   }
 
   @Transactional
-  public Book insertBook(BookRequest bookReq) {
-    List<Author> authorsFound = authorService.findAllById(bookReq.authorIds());
+  public BookResponse createBook(BookRequest bookRequest) {
+    List<Author> authors = authorService.findAllById(bookRequest.authorIds());
 
     Book book = new Book();
-    book.setName(bookReq.name());
-    book.setAuthors(authorsFound);
-    book.setPublishDate(bookReq.publishDate());
-    book.setDescription(bookReq.description());
-    bookRepository.save(book);
-    return book;
+    applyRequest(book, bookRequest, authors);
+    return BookResponse.from(bookRepository.save(book));
+  }
+
+  @Transactional
+  public BookResponse updateBook(Long bookId, BookRequest bookRequest) {
+    Book book = findBook(bookId);
+    List<Author> authors = authorService.findAllById(bookRequest.authorIds());
+
+    applyRequest(book, bookRequest, authors);
+    return BookResponse.from(bookRepository.save(book));
   }
 
   @Transactional
   public void deleteBook(Long bookId) {
-    bookRepository.deleteById(bookId);
+    Book book = findBook(bookId);
+    String coverImagePath = book.getCoverImagePath();
+
+    bookRepository.delete(book);
+    uploadImageService.delete(coverImagePath);
   }
 
   @Transactional
-  public String uploadBookCoverImage(long bookId, MultipartFile file) {
-    var coverImagePath = uploadImageService.store(file);
-    var success = bookRepository.updateCoverImagePathById(coverImagePath, bookId);
-    if (success != 1) {
-      throw new RuntimeException("Failed to upload cover image");
+  public String uploadBookCoverImage(Long bookId, MultipartFile file) {
+    Book book = findBook(bookId);
+    String oldImagePath = book.getCoverImagePath();
+    String newImagePath = uploadImageService.store(file);
+
+    int updatedRows = bookRepository.updateCoverImagePathById(newImagePath, bookId);
+    if (updatedRows != 1) {
+      uploadImageService.delete(newImagePath);
+      throw new NoSuchElementException("Book not found: " + bookId);
     }
 
-    return coverImagePath;
+    uploadImageService.delete(oldImagePath);
+    return newImagePath;
   }
 
-  public Page<Book> getBooks(Pageable pageable) {
-    return bookRepository.findAll(pageable);
+  @Transactional(readOnly = true)
+  public Page<SearchBookResponse> getBooks(Pageable pageable) {
+    return bookRepository.findAll(pageable).map(SearchBookResponse::from);
   }
 
-  public List<Book> searchBooks(SearchBookRequest searchBookRequest) {
+  @Transactional(readOnly = true)
+  public BookResponse getBook(Long bookId) {
+    Book book = bookRepository.findByIdWithAuthors(bookId)
+        .orElseThrow(() -> new NoSuchElementException("Book not found: " + bookId));
+    return BookResponse.from(book);
+  }
+
+  @Transactional(readOnly = true)
+  public Page<SearchBookResponse> getBooksByAuthor(Long authorId, Pageable pageable) {
+    return bookRepository.findByAuthors_Id(authorId, pageable).map(SearchBookResponse::from);
+  }
+
+  @Transactional(readOnly = true)
+  public List<SearchBookResponse> searchBooks(SearchBookRequest searchBookRequest) {
     Specification<Book> spec = (root, query, criteriaBuilder) -> {
       List<Predicate> predicates = new ArrayList<>();
 
@@ -81,22 +112,40 @@ public class BookService {
       if (searchBookRequest.characterIds() != null && !searchBookRequest.characterIds().isEmpty()) {
         predicates.add(root.join("characters").get("id").in(searchBookRequest.characterIds()));
       }
-      if (searchBookRequest.characterRoles() != null && !searchBookRequest.characterRoles()
-          .isEmpty()) {
+      if (searchBookRequest.characterRoles() != null
+          && !searchBookRequest.characterRoles().isEmpty()) {
         predicates.add(root.join("characters").get("role").in(searchBookRequest.characterRoles()));
       }
+      query.distinct(true);
       return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
     };
 
-    return bookRepository.findAll(spec);
+    return bookRepository.findAll(spec).stream().map(SearchBookResponse::from).toList();
   }
 
-  public byte[] getBookCoverImage(Long bookId) {
-    String path = bookRepository.findCoverImagePath(bookId);
-    try {
-      return uploadImageService.load(path).getContentAsByteArray();
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to load cover image", e);
+  @Transactional(readOnly = true)
+  public Resource loadCoverImage(Long bookId) {
+    String path = bookRepository.findCoverImagePathById(bookId)
+        .orElseThrow(() -> new NoSuchElementException(
+            "Cover image not found for book: " + bookId));
+
+    if (path.isBlank()) {
+      throw new NoSuchElementException("Book " + bookId + " does not have a cover image");
     }
+    return uploadImageService.load(path);
+  }
+
+  private void applyRequest(Book book, BookRequest bookRequest, List<Author> authors) {
+    book.setName(bookRequest.name().trim());
+    book.setDescription(bookRequest.description());
+    book.setPublishDate(bookRequest.publishDate());
+
+    book.getAuthors().clear();
+    book.getAuthors().addAll(authors);
+  }
+
+  private Book findBook(Long bookId) {
+    return bookRepository.findById(bookId)
+        .orElseThrow(() -> new NoSuchElementException("Book not found: " + bookId));
   }
 }

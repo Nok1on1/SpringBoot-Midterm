@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.midtermproject.annotations.Sortable;
 import org.hibernate.annotations.BatchSize;
 
 @Entity
@@ -26,15 +27,18 @@ public class Book {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Sortable(type = Long.class)
   private long id;
 
   @Column(nullable = false)
+  @Sortable(type = String.class)
   private String name;
 
   @Column(length = 2500)
   private String description;
 
   @Column()
+  @Sortable(type = LocalDate.class)
   private LocalDate publishDate;
 
   private String coverImagePath;

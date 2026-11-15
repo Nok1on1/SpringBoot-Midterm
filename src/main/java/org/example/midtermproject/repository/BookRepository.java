@@ -1,28 +1,33 @@
 package org.example.midtermproject.repository;
 
-import java.util.List;
+import java.util.Optional;
 import org.example.midtermproject.entity.Book;
+import org.example.midtermproject.entity.Character;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book>,
-    PagingAndSortingRepository<Book, Long> {
+public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
 
-  List<Book> findByNameContainsIgnoreCase(String name);
+  Page<Book> findByAuthors_Id(Long authorId, Pageable pageable);
 
-  @Transactional
-  @Modifying
-  @Query("update Book b set b.coverImagePath = ?1 where b.id = ?2")
-  int updateCoverImagePathById(String coverImagePath, long id);
+  @Query("select distinct b from Book b left join fetch b.authors where b.id = :id")
+  Optional<Book> findByIdWithAuthors(@Param("id") Long id);
 
-  List<Book> findBooksByName(String name);
+  @Query(value = "select distinct b from Book b join b.characters c where c.role = :role",
+      countQuery = "select count(distinct b) from Book b join b.characters c where c.role = :role")
+  Page<Book> findByCharacterRole(@Param("role") Character.Role role, Pageable pageable);
 
-  @Query("select b.coverImagePath from Book b where b.id = ?1")
-  String findCoverImagePath(Long bookId);
+  @Query("select b.coverImagePath from Book b where b.id = :id")
+  Optional<String> findCoverImagePathById(@Param("id") Long id);
+
+  @Modifying(clearAutomatically = true, flushAutomatically = true)
+  @Query("update Book b set b.coverImagePath = :path where b.id = :id")
+  int updateCoverImagePathById(@Param("path") String path, @Param("id") Long id);
 }

@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.midtermproject.annotations.Sortable;
 
 @Entity
 @Table(name = "characters")
@@ -24,14 +25,17 @@ public class Character {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(nullable = false)
+  @Sortable(type = Long.class)
   private long id;
 
 
   @Column(nullable = false)
+  @Sortable(type = String.class)
   private String name;
 
-  @Enumerated(EnumType.ORDINAL)
-  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  @Sortable(type = Role.class)
   private Role role;
 
   public enum Role {
