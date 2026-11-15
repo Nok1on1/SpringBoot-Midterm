@@ -39,7 +39,7 @@ public class CharacterController {
     this.characterService = characterService;
   }
 
-  @PostMapping("/books/{bookId}/characters")
+  @PostMapping("/books/{bookId}/character")
   @ResponseStatus(HttpStatus.CREATED)
   public CharacterResponse createCharacter(@PathVariable @Positive Long bookId,
       @Valid @RequestBody CharacterRequest characterRequest) {

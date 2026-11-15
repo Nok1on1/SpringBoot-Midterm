@@ -1,6 +1,5 @@
 package org.example.midtermproject.repository;
 
-import java.util.List;
 import java.util.Optional;
 import org.example.midtermproject.entity.Author;
 import org.springframework.data.domain.Page;
@@ -19,7 +18,4 @@ public interface AuthorRepository extends JpaRepository<Author, Long> {
 
   @Query("select distinct a from Author a left join fetch a.books where a.id = :id")
   Optional<Author> findByIdWithBook(@Param("id") Long authorId);
-
-
-
 }

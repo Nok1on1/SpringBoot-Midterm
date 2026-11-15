@@ -98,4 +98,10 @@ public class AuthorController {
     Pageable pageable = BOOK_PAGEABLE.of(page, size, sortBy, sortDir);
     return PageResponse.from(bookService.getBooksByAuthor(authorId, pageable));
   }
+
+  @PutMapping("/{authorId}/book")
+  public void addBookToAuthor(@PathVariable @Positive Long authorId,
+      @RequestParam @Positive Long bookId) {
+    authorService.addBookToAuthor(authorId, bookId);
+  }
 }

@@ -1,5 +1,6 @@
 package org.example.midtermproject.service;
 
+import jakarta.validation.constraints.Positive;
 import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -8,6 +9,7 @@ import org.example.midtermproject.dto.response.AuthorResponse;
 import org.example.midtermproject.entity.Author;
 import org.example.midtermproject.entity.Book;
 import org.example.midtermproject.repository.AuthorRepository;
+import org.example.midtermproject.repository.BookRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,9 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthorService {
 
   private final AuthorRepository authorRepository;
+  private final BookRepository bookRepository;
 
-  public AuthorService(AuthorRepository authorRepository) {
+  public AuthorService(AuthorRepository authorRepository, BookRepository bookRepository) {
     this.authorRepository = authorRepository;
+    this.bookRepository = bookRepository;
   }
 
   @Transactional
@@ -96,5 +100,19 @@ public class AuthorService {
         throw new IllegalArgumentException("Email is already in use: " + email);
       }
     });
+  }
+
+  @Transactional
+  public void addBookToAuthor(@Positive Long authorId, @Positive Long bookId) {
+    Author author = authorRepository.findById(authorId)
+        .orElseThrow(() -> new NoSuchElementException("Author not found: " + authorId));
+    Book book = bookRepository.findByIdWithAuthors(bookId)
+        .orElseThrow(() -> new NoSuchElementException("Book not found: " + bookId));
+
+    boolean alreadyLinked = book.getAuthors().stream()
+        .anyMatch(existingAuthor -> existingAuthor.getId() == authorId);
+    if (!alreadyLinked) {
+      book.getAuthors().add(author);
+    }
   }
 }

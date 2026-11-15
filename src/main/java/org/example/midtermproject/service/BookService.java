@@ -2,7 +2,6 @@ package org.example.midtermproject.service;
 
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.example.midtermproject.dto.request.BookRequest;
@@ -91,10 +90,7 @@ public class BookService {
 
   @Transactional(readOnly = true)
   public Page<SearchBookResponse> getBooksByAuthor(Long authorId, Pageable pageable) {
-    Author author = new Author();
-    author.setId(authorId);
-    return bookRepository.findBooksByAuthors(Collections.singletonList(author), pageable)
-        .map(SearchBookResponse::from);
+    return bookRepository.findBooksByAuthorId(authorId, pageable).map(SearchBookResponse::from);
   }
 
   @Transactional(readOnly = true)
@@ -116,8 +112,8 @@ public class BookService {
       if (searchBookRequest.characterIds() != null && !searchBookRequest.characterIds().isEmpty()) {
         predicates.add(root.join("characters").get("id").in(searchBookRequest.characterIds()));
       }
-      if (searchBookRequest.characterRoles() != null
-          && !searchBookRequest.characterRoles().isEmpty()) {
+      if (searchBookRequest.characterRoles() != null && !searchBookRequest.characterRoles()
+          .isEmpty()) {
         predicates.add(root.join("characters").get("role").in(searchBookRequest.characterRoles()));
       }
       query.distinct(true);
@@ -130,8 +126,7 @@ public class BookService {
   @Transactional(readOnly = true)
   public Resource loadCoverImage(Long bookId) {
     String path = bookRepository.findCoverImagePathById(bookId)
-        .orElseThrow(() -> new NoSuchElementException(
-            "Cover image not found for book: " + bookId));
+        .orElseThrow(() -> new NoSuchElementException("Cover image not found for book: " + bookId));
 
     if (path.isBlank()) {
       throw new NoSuchElementException("Book " + bookId + " does not have a cover image");
