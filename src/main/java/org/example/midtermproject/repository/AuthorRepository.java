@@ -18,12 +18,8 @@ public interface AuthorRepository extends JpaRepository<Author, Long> {
   Page<Author> findByLastNameContainingIgnoreCase(String lastName, Pageable pageable);
 
   @Query("select distinct a from Author a left join fetch a.books where a.id = :id")
-  Optional<Author> findByIdWithBook(@Param("id") Long id);
+  Optional<Author> findByIdWithBook(@Param("id") Long authorId);
 
-  @Query("select a from Author a left join a.books b group by a "
-      + "having count(b) >= :minBooks order by count(b) desc")
-  List<Author> findAuthorsWithAtLeastBooks(@Param("minBooks") long minBooks);
 
-  @Query("select count(b) from Author a join a.books b where a.id = :id")
-  long countBooksByAuthorId(@Param("id") Long id);
+
 }

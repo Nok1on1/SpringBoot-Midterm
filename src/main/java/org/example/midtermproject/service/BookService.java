@@ -2,6 +2,7 @@ package org.example.midtermproject.service;
 
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.example.midtermproject.dto.request.BookRequest;
@@ -90,7 +91,10 @@ public class BookService {
 
   @Transactional(readOnly = true)
   public Page<SearchBookResponse> getBooksByAuthor(Long authorId, Pageable pageable) {
-    return bookRepository.findByAuthors_Id(authorId, pageable).map(SearchBookResponse::from);
+    Author author = new Author();
+    author.setId(authorId);
+    return bookRepository.findBooksByAuthors(Collections.singletonList(author), pageable)
+        .map(SearchBookResponse::from);
   }
 
   @Transactional(readOnly = true)
