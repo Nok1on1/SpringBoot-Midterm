@@ -13,6 +13,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.midtermproject.annotations.Sortable;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "authors")
@@ -41,5 +42,6 @@ public class Author {
   private LocalDate birthDate;
 
   @ManyToMany(mappedBy = "authors")
+  @BatchSize(size = 30)
   private List<Book> books = new ArrayList<>();
 }

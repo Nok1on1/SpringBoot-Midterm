@@ -15,6 +15,7 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.midtermproject.annotations.Sortable;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "characters")
@@ -46,5 +47,6 @@ public class Character {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "book_id", nullable = false)
+  @BatchSize(size = 30)
   private Book book;
 }
