@@ -2,6 +2,7 @@ package org.example.midtermproject.util;
 
 import java.lang.reflect.Field;
 import org.example.midtermproject.annotations.SortableFieldCache;
+import org.example.midtermproject.dto.request.PaginationRequest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -13,7 +14,9 @@ public final class PageableUtils {
   public PageableUtils(Class<?> entityClass) {
     this.entityClass = entityClass;
   }
-
+  public Pageable of(PaginationRequest pagination) {
+    return of(pagination.getPage(), pagination.getSize(), pagination.getSortBy(), pagination.getSortDir());
+  }
   public Pageable of(int page, int size, String sortBy, String direction) {
     Field sortField = SortableFieldCache.getSortableField(entityClass, sortBy);
 

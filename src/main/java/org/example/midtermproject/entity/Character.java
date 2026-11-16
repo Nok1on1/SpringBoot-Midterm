@@ -26,7 +26,7 @@ public class Character {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(nullable = false)
   @Sortable(type = Long.class)
-  private long id;
+  private Long id;
 
 
   @Column(nullable = false)

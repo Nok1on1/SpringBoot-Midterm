@@ -31,7 +31,7 @@ public class AuthorService {
     ensureEmailAvailable(authorRequest.email(), null);
 
     Author author = new Author();
-    applyRequest(author, authorRequest);
+    author.from(authorRequest);
     return AuthorResponse.from(authorRepository.save(author));
   }
 
@@ -40,7 +40,7 @@ public class AuthorService {
     Author author = findAuthorWithBooks(authorId);
     ensureEmailAvailable(authorRequest.email(), authorId);
 
-    applyRequest(author, authorRequest);
+    author.from(authorRequest);
     return AuthorResponse.from(authorRepository.save(author));
   }
 
@@ -85,13 +85,6 @@ public class AuthorService {
   private Author findAuthorWithBooks(Long authorId) {
     return authorRepository.findByIdWithBook(authorId)
         .orElseThrow(() -> new NoSuchElementException("Author not found: " + authorId));
-  }
-
-  private void applyRequest(Author author, AuthorRequest authorRequest) {
-    author.setFirstName(authorRequest.firstName().trim());
-    author.setLastName(authorRequest.lastName().trim());
-    author.setEmail(authorRequest.email().trim());
-    author.setBirthDate(authorRequest.birthDate());
   }
 
   private void ensureEmailAvailable(String email, Long currentAuthorId) {

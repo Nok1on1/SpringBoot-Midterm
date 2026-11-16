@@ -1,11 +1,10 @@
 package org.example.midtermproject.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import org.example.midtermproject.dto.request.AuthorRequest;
+import org.example.midtermproject.dto.request.PaginationRequest;
 import org.example.midtermproject.dto.response.AuthorResponse;
 import org.example.midtermproject.dto.response.PageResponse;
 import org.example.midtermproject.dto.response.SearchBookResponse;
@@ -19,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -52,22 +52,16 @@ public class AuthorController {
 
   @GetMapping
   public PageResponse<AuthorResponse> getAuthors(
-      @RequestParam(defaultValue = "0") @Min(0) int page,
-      @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
-      @RequestParam(defaultValue = "lastName") String sortBy,
-      @RequestParam(defaultValue = "asc") String sortDir) {
-    Pageable pageable = AUTHOR_PAGEABLE.of(page, size, sortBy, sortDir);
+      @Valid @ModelAttribute PaginationRequest pagination) {
+    Pageable pageable = AUTHOR_PAGEABLE.of(pagination);
     return PageResponse.from(authorService.getAuthors(pageable));
   }
 
   @GetMapping("/search")
   public PageResponse<AuthorResponse> searchAuthorsByLastName(
       @RequestParam @NotBlank String lastName,
-      @RequestParam(defaultValue = "0") @Min(0) int page,
-      @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
-      @RequestParam(defaultValue = "lastName") String sortBy,
-      @RequestParam(defaultValue = "asc") String sortDir) {
-    Pageable pageable = AUTHOR_PAGEABLE.of(page, size, sortBy, sortDir);
+      @Valid @ModelAttribute PaginationRequest pagination) {
+    Pageable pageable = AUTHOR_PAGEABLE.of(pagination);
     return PageResponse.from(authorService.getAuthorsByLastName(lastName, pageable));
   }
 
@@ -91,11 +85,8 @@ public class AuthorController {
   @GetMapping("/{authorId}/books")
   public PageResponse<SearchBookResponse> getBooksByAuthor(
       @PathVariable @Positive Long authorId,
-      @RequestParam(defaultValue = "0") @Min(0) int page,
-      @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
-      @RequestParam(defaultValue = "name") String sortBy,
-      @RequestParam(defaultValue = "asc") String sortDir) {
-    Pageable pageable = BOOK_PAGEABLE.of(page, size, sortBy, sortDir);
+      @Valid @ModelAttribute PaginationRequest pagination) {
+    Pageable pageable = BOOK_PAGEABLE.of(pagination);
     return PageResponse.from(bookService.getBooksByAuthor(authorId, pageable));
   }
 

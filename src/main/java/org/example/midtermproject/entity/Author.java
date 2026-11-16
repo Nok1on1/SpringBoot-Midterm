@@ -13,6 +13,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.example.midtermproject.annotations.Sortable;
+import org.example.midtermproject.dto.request.AuthorRequest;
 
 @Entity
 @Table(name = "authors")
@@ -42,4 +43,11 @@ public class Author {
 
   @ManyToMany(mappedBy = "authors")
   private List<Book> books = new ArrayList<>();
+
+  public void from(AuthorRequest authorRequest) {
+    this.setFirstName(authorRequest.firstName().trim());
+    this.setLastName(authorRequest.lastName().trim());
+    this.setEmail(authorRequest.email().trim());
+    this.setBirthDate(authorRequest.birthDate());
+  }
 }

@@ -1,6 +1,5 @@
 package org.example.midtermproject.service;
 
-import java.util.List;
 import java.util.NoSuchElementException;
 import org.example.midtermproject.dto.request.CharacterRequest;
 import org.example.midtermproject.dto.response.CharacterResponse;
@@ -84,13 +83,6 @@ public class CharacterService {
         : characterRepository.findByBookIdAndRole(bookId, role, pageable);
 
     return characters.map(CharacterResponse::from);
-  }
-
-  @Transactional(readOnly = true)
-  public List<CharacterResponse> searchCharactersInBook(Long bookId, String name) {
-    return characterRepository.findByBookIdAndNameContainingIgnoreCase(bookId, name).stream()
-        .map(CharacterResponse::from)
-        .toList();
   }
 
   private Character findCharacter(Long characterId) {
