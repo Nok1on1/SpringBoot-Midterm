@@ -1,7 +1,6 @@
 package org.example.midtermproject.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import org.example.midtermproject.dto.request.AuthorRequest;
 import org.example.midtermproject.dto.request.PaginationRequest;
@@ -57,12 +56,12 @@ public class AuthorController {
     return PageResponse.from(authorService.getAuthors(pageable));
   }
 
-  @GetMapping("/search")
+  @PostMapping("/advanced-search")
   public PageResponse<AuthorResponse> searchAuthorsByLastName(
-      @RequestParam @NotBlank String lastName,
+      @RequestBody AuthorRequest authorRequest,
       @Valid @ModelAttribute PaginationRequest pagination) {
     Pageable pageable = AUTHOR_PAGEABLE.of(pagination);
-    return PageResponse.from(authorService.getAuthorsByLastName(lastName, pageable));
+    return PageResponse.from(authorService.getAuthors(authorRequest, pageable));
   }
 
   @GetMapping("/{authorId}")

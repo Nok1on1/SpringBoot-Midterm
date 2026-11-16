@@ -1,6 +1,8 @@
 package org.example.midtermproject.service;
 
+import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.constraints.Positive;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -12,6 +14,7 @@ import org.example.midtermproject.repository.AuthorRepository;
 import org.example.midtermproject.repository.BookRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,9 +65,29 @@ public class AuthorService {
   }
 
   @Transactional(readOnly = true)
-  public Page<AuthorResponse> getAuthorsByLastName(String lastName, Pageable pageable) {
-    return authorRepository.findByLastNameContainingIgnoreCase(lastName, pageable)
-        .map(AuthorResponse::from);
+  public Page<AuthorResponse> getAuthors(AuthorRequest authorRequest, Pageable pageable) {
+    Specification<Author> spec = (root, query, criteriaBuilder) -> {
+      List<Predicate> predicates = new ArrayList<>();
+      if (authorRequest.firstName() != null && !authorRequest.firstName().isEmpty()) {
+        predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("firstName")),
+            authorRequest.firstName().toLowerCase()));
+      }
+      if (authorRequest.lastName() != null && !authorRequest.lastName().isEmpty()) {
+        predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("lastName")),
+            authorRequest.lastName().toLowerCase()));
+      }
+      if (authorRequest.email() != null && !authorRequest.email().isEmpty()) {
+        predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("email")),
+            authorRequest.email().toLowerCase()));
+      }
+      if (authorRequest.birthDate() != null) {
+        predicates.add(criteriaBuilder.equal(root.get("birthDate"), authorRequest.birthDate()));
+      }
+
+      query.distinct(true);
+      return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+    };
+    return authorRepository.findAll(spec, pageable).map(AuthorResponse::from);
   }
 
   @Transactional(readOnly = true)
