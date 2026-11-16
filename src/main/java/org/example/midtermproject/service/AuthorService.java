@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.example.midtermproject.dto.request.AuthorRequest;
+import org.example.midtermproject.dto.request.SearchAuthorRequest;
 import org.example.midtermproject.dto.response.AuthorResponse;
 import org.example.midtermproject.entity.Author;
 import org.example.midtermproject.entity.Book;
@@ -65,23 +66,25 @@ public class AuthorService {
   }
 
   @Transactional(readOnly = true)
-  public Page<AuthorResponse> getAuthors(AuthorRequest authorRequest, Pageable pageable) {
+  public Page<AuthorResponse> getAuthors(SearchAuthorRequest searchAuthorRequest,
+      Pageable pageable) {
     Specification<Author> spec = (root, query, criteriaBuilder) -> {
       List<Predicate> predicates = new ArrayList<>();
-      if (authorRequest.firstName() != null && !authorRequest.firstName().isEmpty()) {
-        predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("firstName")),
-            authorRequest.firstName().toLowerCase()));
+      if (searchAuthorRequest.firstName() != null && !searchAuthorRequest.firstName().isBlank()) {
+        predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("firstName")),
+            "%" + searchAuthorRequest.firstName().trim().toLowerCase() + "%"));
       }
-      if (authorRequest.lastName() != null && !authorRequest.lastName().isEmpty()) {
-        predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("lastName")),
-            authorRequest.lastName().toLowerCase()));
+      if (searchAuthorRequest.lastName() != null && !searchAuthorRequest.lastName().isBlank()) {
+        predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")),
+            "%" + searchAuthorRequest.lastName().trim().toLowerCase() + "%"));
       }
-      if (authorRequest.email() != null && !authorRequest.email().isEmpty()) {
-        predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(root.get("email")),
-            authorRequest.email().toLowerCase()));
+      if (searchAuthorRequest.email() != null && !searchAuthorRequest.email().isBlank()) {
+        predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("email")),
+            "%" + searchAuthorRequest.email().trim().toLowerCase() + "%"));
       }
-      if (authorRequest.birthDate() != null) {
-        predicates.add(criteriaBuilder.equal(root.get("birthDate"), authorRequest.birthDate()));
+      if (searchAuthorRequest.birthDate() != null) {
+        predicates.add(criteriaBuilder.equal(root.get("birthDate"),
+            searchAuthorRequest.birthDate()));
       }
 
       query.distinct(true);

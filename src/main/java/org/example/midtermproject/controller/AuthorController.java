@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import org.example.midtermproject.dto.request.AuthorRequest;
 import org.example.midtermproject.dto.request.PaginationRequest;
+import org.example.midtermproject.dto.request.SearchAuthorRequest;
 import org.example.midtermproject.dto.response.AuthorResponse;
 import org.example.midtermproject.dto.response.PageResponse;
 import org.example.midtermproject.dto.response.SearchBookResponse;
@@ -57,11 +58,11 @@ public class AuthorController {
   }
 
   @PostMapping("/advanced-search")
-  public PageResponse<AuthorResponse> searchAuthorsByLastName(
-      @RequestBody AuthorRequest authorRequest,
+  public PageResponse<AuthorResponse> searchAuthors(
+      @Valid @RequestBody SearchAuthorRequest searchAuthorRequest,
       @Valid @ModelAttribute PaginationRequest pagination) {
     Pageable pageable = AUTHOR_PAGEABLE.of(pagination);
-    return PageResponse.from(authorService.getAuthors(authorRequest, pageable));
+    return PageResponse.from(authorService.getAuthors(searchAuthorRequest, pageable));
   }
 
   @GetMapping("/{authorId}")
